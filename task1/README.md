@@ -1,19 +1,19 @@
-Task Manager CLI
+# Task Manager Application
 
-This is a small prototype command-line task manager that stores tasks in JSON.
+As mentioned in the assignment, this is meant to be a simple command-line application to manage one to-do list.
+!!! It will store said parameters into a 'tasks.json' file.
 
-Usage examples:
+## How to Run
 
-- Add a task:
-  python task_manager.py add "Buy milk" --desc "2 liters" --tags shopping,groceries
+Make sure you are in the 'tasks1' directory
 
-- List tasks:
-  python task_manager.py list
+### Add a Task
+'''bash
+python task_manager.py add "Buy Groceries"
 
-- List tasks with a tag:
-  python task_manager.py list --tag groceries
+### List All Tasks
+'''bash
+python task_manager.py list
 
-- Search tasks:
-  python task_manager.py search milk
-
-Data is stored in `data/tasks.json` next to the script.
+### Search for a Task
+python task_manager.py search "Groceries"
