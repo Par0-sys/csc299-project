@@ -1,138 +1,87 @@
-#!/usr/bin/env python3
-"""Simple task manager CLI.
-
-Commands:
-  add "title" [--desc "description"] [--tags tag1,tag2]
-  list [--tag TAG]
-  search QUERY
-
-Data is stored in data/tasks.json relative to this file.
-"""
-from __future__ import annotations
-
 import argparse
 import json
 import os
-from dataclasses import dataclass, asdict
-from datetime import datetime
-from typing import List, Optional
 
-ROOT_DIR = os.path.dirname(__file__)
-DATA_DIR = os.path.join(ROOT_DIR, "data")
-DATA_FILE = os.path.join(DATA_DIR, "tasks.json")
-
-
-@dataclass
-class Task:
-    id: int
-    title: str
-    description: str = ""
-    tags: List[str] = None
-    created_at: str = ""
-
-    def to_dict(self):
-        d = asdict(self)
-        d["tags"] = d.get("tags") or []
-        return d
-
+# The name of our data file
+DATA_FILE = 'tasks.json'
+DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def ensure_data_file():
-    os.makedirs(DATA_DIR, exist_ok=True)
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump({"tasks": []}, f, indent=2)
+    """Creates the tasks.json file with empty structure if it doesn't exist."""
+    file_path = os.path.join(DATA_DIR, DATA_FILE)
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            json.dump([], f, indent=4)
 
+def load_tasks():
+    """Loads tasks from the JSON file. Returns empty list if file doesn't exist."""
+    ensure_data_file()  # Make sure the file exists
+    file_path = os.path.join(DATA_DIR, DATA_FILE)
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return []
 
-def read_tasks() -> List[Task]:
-    ensure_data_file()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    tasks = []
-    for t in data.get("tasks", []):
-        tasks.append(Task(
-            id=t.get("id"),
-            title=t.get("title", ""),
-            description=t.get("description", ""),
-            tags=t.get("tags", []) or [],
-            created_at=t.get("created_at", ""),
-        ))
-    return tasks
+def save_tasks(tasks):
+    "Saves the list of tasks to the JSON file."
+    file_path = os.path.join(DATA_DIR, DATA_FILE)
+    with open(file_path, 'w') as f:
+        json.dump(tasks, f, indent=4)
 
+def add_task(description):
+    "Adds a new task to the list."
+    tasks = load_tasks()
+    tasks.append({'id': len(tasks) + 1, 'description': description, 'status': 'pending'})
+    save_tasks(tasks)
+    print(f"Added task: '{description}'")
 
-def write_tasks(tasks: List[Task]):
-    ensure_data_file()
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump({"tasks": [t.to_dict() for t in tasks]}, f, indent=2)
+def list_tasks():
+    "Lists all tasks."
+    tasks = load_tasks()
+    if not tasks:
+        print("No tasks found.")
+        return
 
+    for task in tasks:
+        print(f"[{task['id']}] {task['description']} ({task['status']})")
 
-def add_task(title: str, description: str = "", tags: Optional[List[str]] = None) -> Task:
-    tasks = read_tasks()
-    next_id = max((t.id for t in tasks), default=0) + 1
-    created_at = datetime.utcnow().isoformat() + "Z"
-    task = Task(id=next_id, title=title, description=description, tags=tags or [], created_at=created_at)
-    tasks.append(task)
-    write_tasks(tasks)
-    return task
+def search_tasks(search_term):
+    "Searches for tasks containing the search term."
+    tasks = load_tasks()
+    found_tasks = [task for task in tasks if search_term.lower() in task['description'].lower()]
 
+    if not found_tasks:
+        print(f"No tasks found matching '{search_term}'.")
+        return
 
-def list_tasks(tag: Optional[str] = None) -> List[Task]:
-    tasks = read_tasks()
-    if tag:
-        tasks = [t for t in tasks if tag in (t.tags or [])]
-    return tasks
+    print(f"Found {len(found_tasks)} task(s) matching '{search_term}':")
+    for task in found_tasks:
+        print(f"[{task['id']}] {task['description']} ({task['status']})")
 
+def main():
+    parser = argparse.ArgumentParser(description="A simple command-line task manager.")
+    subparsers = parser.add_subparsers(dest='command', help='Available commands', required=True)
 
-def search_tasks(query: str) -> List[Task]:
-    q = query.lower()
-    tasks = read_tasks()
-    results = [t for t in tasks if q in t.title.lower() or q in (t.description or "").lower() or any(q in ta.lower() for ta in (t.tags or []))]
-    return results
+    # 'add' command
+    add_parser = subparsers.add_parser('add', help='Add a new task')
+    add_parser.add_argument('description', type=str, help='Makes an addition to the task list')
 
+    # 'list' command
+    list_parser = subparsers.add_parser('list', help='List all tasks')
 
-def main(argv: Optional[List[str]] = None):
-    parser = argparse.ArgumentParser(prog="task_manager", description="Simple JSON-backed task manager CLI")
-    sub = parser.add_subparsers(dest="cmd")
+    # 'search' command
+    search_parser = subparsers.add_parser('search', help='Search for a task')
+    search_parser.add_argument('term', type=str, help='searches for any task that includes the parameter')
 
-    p_add = sub.add_parser("add", help="Add a task")
-    p_add.add_argument("title", help="Task title")
-    p_add.add_argument("--desc", default="", help="Description")
-    p_add.add_argument("--tags", default="", help="Comma-separated tags")
+    args = parser.parse_args()
 
-    p_list = sub.add_parser("list", help="List tasks")
-    p_list.add_argument("--tag", default="", help="Filter by tag")
-
-    p_search = sub.add_parser("search", help="Search tasks")
-    p_search.add_argument("query", help="Search query")
-
-    args = parser.parse_args(argv)
-
-    if args.cmd == "add":
-        tags = [t.strip() for t in args.tags.split(",") if t.strip()]
-        task = add_task(args.title, args.desc, tags)
-        print(f"Added task #{task.id}: {task.title}")
-
-    elif args.cmd == "list":
-        tag = args.tag or None
-        tasks = list_tasks(tag)
-        if not tasks:
-            print("No tasks found.")
-            return
-        for t in tasks:
-            tags = ",".join(t.tags or [])
-            print(f"#{t.id} {t.title} [{tags}]\n  {t.description}")
-
-    elif args.cmd == "search":
-        results = search_tasks(args.query)
-        if not results:
-            print("No results.")
-            return
-        for t in results:
-            tags = ",".join(t.tags or [])
-            print(f"#{t.id} {t.title} [{tags}]\n  {t.description}")
-
-    else:
-        parser.print_help()
-
+    if args.command == 'add':
+        add_task(args.description)
+    elif args.command == 'list':
+        list_tasks()
+    elif args.command == 'search':
+        search_tasks(args.term)
 
 if __name__ == "__main__":
     main()
