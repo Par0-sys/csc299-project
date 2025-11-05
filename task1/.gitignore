@@ -1,0 +1,6 @@
+# Ignore the task data file
+tasks1/tasks.json
+
+# Ignore Python Cache Files
+__pycache__/
+*.pyc

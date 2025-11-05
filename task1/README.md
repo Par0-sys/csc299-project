@@ -1,7 +1,7 @@
 # Task Manager Application
 
 As mentioned in the assignment, this is meant to be a simple command-line application to manage one to-do list.
-!!! It will store said parameters into a 'tasks.json' file.
+!!! It will store said parameters into a 'tasks.json' file. 
 
 ## How to Run
 
