@@ -1,0 +1,21 @@
+# ignore generated data
+/data/tasks.json
+
+# Python cache / bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# pytest cache
+.pytest_cache/
+
+# virtual envs
+venv/
+env/
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
