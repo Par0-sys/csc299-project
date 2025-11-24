@@ -1,4 +1,4 @@
-# Development Summary: AI-Powered PKMS
+# Development Summary: AI-Powered PKMS/Task System
 
 Overall Summary of the project seperated by sections of how the project went. I had a lot of fun with the project and learned especially how terminals are vital parts of coding. Through the first few weeks, I was confused on the actual final deliverable that needed to be given for the final project to count in a way, but also needed to find out what I even wanted to do once that realization hit. Those task homework assignments really were the bread and butter for what made this entire thing possible. The use of AI in this class was also another life-saver in helping me close the knowledge gaps that I was having, while also using them to 
 
@@ -11,7 +11,7 @@ Both of these were provided at the beginning of the class as mandatory installs,
 
 ### Phase 1: Planning and Architecture
 
-I began with the project's broad requirements. My first step was to use the AI chat service as an AI Architect to format the entire project and bounce ideas from. I presented the requirements to it, and the AI helped me brainstorm the core architecture, breaking the project down into four layers: Storage, Logic, AI, and Interface. We collaboratively debated the pros and cons of using JSON, Neo4J, or SQLite as the storage layer. We decided on SQLite because it is powerful, portable, and doesn't require a separate server or complex file management. This decision worked very well towards the end of the project as there weren't any hiccups from the start using this format. And since it was listed as a storage type, I presumed that it was allowed to be used. The AI then provided an initial "study plan" and prototype stubs for the database to begin working on the project itself.
+I began with the project's broad requirements. My first step was to use the AI chat service as an AI Architect to format the entire project and bounce ideas from. I presented the requirements to it, and the AI helped me brainstorm the core architecture, breaking the project down into four layers: Storage, Logic, AI, and Interface. We collaboratively debated the pros and cons of using JSON, Neo4J, or SQLite as the storage layer. We decided on SQLite because it is powerful, portable, and doesn't require a separate server or complex file management. This decision worked very well towards the end of the project as there weren't any hiccups from the start using this format. And since it was listed as a storage type in the final project, I presumed that it was allowed to be used. The AI then provided an initial "study plan" and prototype stubs for the database to begin working on the project itself.
 
 ### Phase 2: Core Logic Prototyping
 
@@ -19,11 +19,11 @@ Once the architecture was set, I used the AI as a Pair-Programmer and Tutor. I a
 
 ### Phase 3: The "Smart Librarian" (Where the majority of bugs occured)
 
-The "Smart Librarian" was the most complex feature and involved several pivots. My AI assistant initially suggested using sentence-transformers, a local, open-source model for creating embeddings. This was a false start because it required a heavy installation called torch, something I have never heard of in my lifetime and would be uncomfortable with using, and it never was mentioned in the lectures at all. To address my concern about heavy installs, I asked if it was possible to build it without any new libraries. The AI explained that this was not possible for true AI search but provided a non-AI "Keyword Librarian" using SQL LIKE. This was a second false start, as it met the "no-install" constraint but failed the "AI agent" project requirement.
+The "Smart Librarian" was the most complex feature and involved several issues that needed debugging overall. My AI assistant initially suggested using sentence-transformers, a local, open-source model for creating embeddings. This was a false start because it required a heavy installation called torch, something I have never heard of in my lifetime and would be uncomfortable with using, and it never was mentioned in the lectures at all. It also felt like it breached some requirement on the final project, so I told them to not go through with it. To address my concern about heavy installs, I asked if it was possible to build it without any new libraries. The AI explained that this was not possible for true AI search but provided a non-AI "Keyword Librarian" using SQL LIKE. This was a second false start, as it met the "no-install" constraint but failed the "AI agent" project requirement.
 
 The breakthrough came when I asked, "Can't I just use OpenAI from my lecture?" The AI immediately pivoted, explaining the trade-offs (cloud vs. local, cost vs. free) and generated a new prototype, note_manager.py, using the openai library for embeddings. This was a much better solution, as it was lightweight and re-used the same openai library we would need for other agents.
 
-With that, it assetted with a new mountain of debugging to make it work properly, sometimes the list tasks function wouldn't know where it was, while other times the AI didn't know any key was used for it. In the end, I asked 
+With that, it assetted with a new mountain of debugging to make it work properly, sometimes the list tasks function wouldn't know where it was, while other times the AI didn't know any key was used for it. In the end, Using both Google Gemini and Copilot were the assistants I needed to push through these troubleshoots and make sure the code worked properly. How I fixed the list tasks function was turning it into a command for the user to filter through specific types of lists.
 
 ###  Phase 4: Iterative Feature Development & Workflow
 
