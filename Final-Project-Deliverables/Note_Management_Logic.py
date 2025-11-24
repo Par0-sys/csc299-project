@@ -125,3 +125,39 @@ def get_note_by_id(note_id):
     note = cursor.fetchone()
     conn.close()
     return note
+
+def summarize_note(note_id):
+    """
+    Summarizes the content of a specific note using an AI chat model.
+    """
+    # 1. Get the note content from our database
+    note = get_note_by_id(note_id)
+    if not note:
+        return f"Error: No note found with ID {note_id}"
+        
+    if CLIENT is None:
+        return "Error: OpenAI API key not set. Cannot summarize."
+
+    # 2. Prepare the prompt for the AI
+    system_prompt = "You are a concise assistant. Summarize the following note into one or two key sentences."
+    user_content = note['content']
+    
+    try:
+        # 3. Call the Chat Completions API
+        response = CLIENT.chat.completions.create(
+            model="chatgpt-4o-latest",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            temperature=0.3, # Low temperature for more factual summaries
+            max_tokens=100
+        )
+        
+        summary = response.choices[0].message.content
+        return summary
+        
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        return "Error: Failed to get summary from AI."
+    

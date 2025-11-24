@@ -2,7 +2,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 
-# Local modules (match filenames in this folder)
+# Local modules
 import Database_initializer as database
 import Task_Management_Logic as task_manager
 import Note_Management_Logic as note_manager
@@ -36,11 +36,35 @@ def handle_add_task():
     
     task_manager.add_task(title, desc or None, int(priority), due_date or None)
 
-def handle_list_tasks():
-    """Retrieves and prints all tasks in a table."""
-    tasks = task_manager.query_tasks()
+def handle_list_tasks(command):
+    """Retrieves and prints all tasks in a table, with optional filtering."""
+    
+    # Parse filter from command
+    parts = command.split(" ")
+    filter_word = None
+    if len(parts) > 2:
+        filter_word = parts[2].lower()
+
+    status_filter = None
+    priority_filter = None
+    table_title = "All Tasks"
+
+    if filter_word in ['todo', 'doing', 'done']:
+        status_filter = filter_word
+        table_title = f"Tasks: {filter_word.upper()}"
+    elif filter_word == 'high':
+        priority_filter = 1
+        table_title = "Tasks: High Priority"
+    elif filter_word == 'medium':
+        priority_filter = 2
+        table_title = "Tasks: Medium Priority"
+    elif filter_word == 'low':
+        priority_filter = 3
+        table_title = "Tasks: Low Priority"
+
+    tasks = task_manager.query_tasks(status=status_filter, priority=priority_filter) 
     if not tasks:
-        console.print("[yellow]No tasks found.[/yellow]")
+        console.print(f"[yellow]No tasks found matching '{filter_word or 'all'}'.[/yellow]")
         return
         
     table = Table(title="All Tasks")
@@ -49,6 +73,13 @@ def handle_list_tasks():
     table.add_column("Status", style="cyan")
     table.add_column("Priority", style="magenta")
     table.add_column("Due Date", style="yellow")
+
+    for task in tasks:
+        priority_style = "green"
+        if task['priority'] == 1:
+            priority_style = "bold red"
+        elif task['priority'] == 2:
+            priority_style = "yellow"
     
     for task in tasks:
         table.add_row(
@@ -181,7 +212,7 @@ def main_loop():
                 except (IndexError, ValueError):
                     console.print("[red]Invalid command. Use: del task [ID][/red]")
             
-            # --- Note Commands ---
+            # Note Commands
             elif command == "add note":
                 handle_add_note()
             elif command == "find similar":
@@ -191,7 +222,7 @@ def main_loop():
             elif command.startswith("get note "):
                 handle_get_note(command)
             
-            # --- Unknown Command ---
+            # Unknown Command
             else:
                 console.print("[red]Unknown command. Type 'help' for options.[/red]")
                 
