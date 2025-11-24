@@ -1,11 +1,10 @@
 from rich.console import Console
-from rich.prompt import Prompt
 from rich.table import Table
-
-# Local modules
-import Database_initializer as database
-import Task_Management_Logic as task_manager
-import Note_Management_Logic as note_manager
+from rich.panel import Panel
+import Database_initializer
+import Task_Management_Logic
+import Note_Management_Logic
+import ai_agents
 
 # Setup rich console
 console = Console()
@@ -14,36 +13,58 @@ def print_help():
     """Prints the main help menu."""
     console.print("\n[bold cyan]Personal AI Assistant Menu[/bold cyan]")
     console.print("[yellow]Tasks:[/yellow]")
-    console.print("  [bold]add task[/bold]    - Add a new task")
-    console.print("  [bold]list tasks[/bold]  - List all tasks")
-    console.print("  [bold]done [ID][/bold]     - Mark task [ID] as 'done'")
-    console.print("  [bold]del task [ID][/bold] - Delete task [ID]")
+    console.print("  [bold]smart add [text...][/bold] - (AI) Add a task with natural language") 
+    console.print("  [bold]add task detailed[/bold] - Add a new task (step-by-step)") 
+    console.print("  [bold]list tasks [filter][/bold] - List tasks. Filter by: todo, doing, done, high, medium, low")
+    console.print("  [bold]done [ID][/bold]         - Mark task [ID] as 'done'")
+    console.print("  [bold]del task [ID][/bold]     - Delete task [ID]")
     console.print("[yellow]Notes (PKMS):[/yellow]")
     console.print("  [bold]add note[/bold]    - Add a new note (will be embedded)")
     console.print("  [bold]find tag [TAG][/bold] - Find notes by tag")
     console.print("  [bold]find similar[/bold] - (Smart Search) Find notes by meaning")
     console.print("  [bold]get note [ID][/bold]  - Get note by its ID")
+    console.print("  [bold]summarize note [ID][/bold] - (AI) Summarize note [ID]")
     console.print("[yellow]General:[/yellow]")
+    console.print("  [bold]brief me[/bold]     - (AI) Get a daily briefing")
     console.print("  [bold]help[/bold]         - Show this menu")
     console.print("  [bold]exit[/bold]         - Quit the application")
 
 def handle_add_task():
     """Guides user through adding a new task."""
-    title = Prompt.ask("[cyan]Task Title[/cyan]")
-    desc = Prompt.ask("[cyan]Description[/cyan] (optional)")
-    priority = Prompt.ask("[cyan]Priority (1-3)[/cyan]", default="3")
-    due_date = Prompt.ask("[cyan]Due Date (YYYY-MM-DD)[/cyan] (optional)")
+    # --- UPDATED: Replaced Prompt.ask with input() ---
+    title = input("Task Title: ")
+    desc = input("Description (optional): ")
+    priority = input("Priority (1-3) [default: 3]: ")
+    due_date = input("Due Date (YYYY-MM-DD) (optional): ")
     
-    task_manager.add_task(title, desc or None, int(priority), due_date or None)
+    # Handle default priority
+    if not priority:
+        priority = "3"
+    # --- END UPDATE ---
+    
+    Task_Management_Logic.add_task(title, desc or None, int(priority), due_date or None)
+
+def handle_smart_add(command):
+    """
+    Extracts the natural language text and sends it to the task parser.
+    """
+    try:
+        # Get everything after "smart add "
+        text = command.split(" ", 2)[2]
+        console.print(f"[yellow]Parsing task: '{text}'...[/yellow]")
+        Task_Management_Logic.add_task_from_natural_language(text)
+    except IndexError:
+        console.print("[red]Error: Please provide text. (e.g., smart add Buy milk tomorrow)[/red]")
 
 def handle_list_tasks(command):
     """Retrieves and prints all tasks in a table, with optional filtering."""
     
-    # Parse filter from command
-    parts = command.split(" ")
+    # --- UPDATED: More robust parsing ---
+    parts = command.split() # split() with no args handles extra spaces
     filter_word = None
-    if len(parts) > 2:
+    if len(parts) == 3: # e.g., ['list', 'tasks', 'todo']
         filter_word = parts[2].lower()
+    # --- END UPDATE ---
 
     status_filter = None
     priority_filter = None
@@ -61,32 +82,36 @@ def handle_list_tasks(command):
     elif filter_word == 'low':
         priority_filter = 3
         table_title = "Tasks: Low Priority"
+    elif filter_word is not None:
+        console.print(f"[red]Error: Unknown filter '{filter_word}'. Showing all tasks.[/red]")
 
-    tasks = task_manager.query_tasks(status=status_filter, priority=priority_filter) 
+
+    tasks = Task_Management_Logic.query_tasks(status=status_filter, priority=priority_filter)
     if not tasks:
         console.print(f"[yellow]No tasks found matching '{filter_word or 'all'}'.[/yellow]")
         return
         
-    table = Table(title="All Tasks")
+    table = Table(title=table_title)
     table.add_column("ID", style="dim", width=4)
     table.add_column("Title", style="bold green", max_width=30)
     table.add_column("Status", style="cyan")
     table.add_column("Priority", style="magenta")
     table.add_column("Due Date", style="yellow")
-
+    
     for task in tasks:
+        # --- Add color-coding for priority ---
         priority_style = "green"
         if task['priority'] == 1:
             priority_style = "bold red"
         elif task['priority'] == 2:
             priority_style = "yellow"
-    
-    for task in tasks:
+        # --- END ---
+
         table.add_row(
             str(task['id']),
             task['title'],
             task['status'],
-            str(task['priority']),
+            f"[{priority_style}]{task['priority']}[/{priority_style}]", 
             task['due_date'] or ""
         )
     console.print(table)
@@ -109,17 +134,21 @@ def handle_add_note():
         console.print("[red]Note canceled.[/red]")
         return
         
-    tags = Prompt.ask("[cyan]Tags (comma-separated)[/cyan] (optional)")
-    note_manager.add_note_and_embed(content, tags or None)
+    # --- UPDATED: Replaced Prompt.ask with input() ---
+    tags = input("Tags (comma-separated) (optional): ")
+    # --- END UPDATE ---
+    Note_Management_Logic.add_note_and_embed(content, tags or None)
 
 def handle_find_similar():
     """Asks for a query and performs semantic search."""
-    query = Prompt.ask("[cyan]What are you looking for?[/cyan]")
+    # --- UPDATED: Replaced Prompt.ask with input() ---
+    query = input("What are you looking for?: ")
+    # --- END UPDATE ---
     if not query:
         return
         
     console.print(f"[yellow]Searching for notes similar to '{query}'...[/yellow]")
-    notes = note_manager.find_similar_notes(query)
+    notes = Note_Management_Logic.find_similar_notes(query)
     
     if not notes:
         console.print("[yellow]No similar notes found.[/yellow]")
@@ -143,7 +172,7 @@ def handle_find_tag(command):
     """Finds notes by a specific tag."""
     try:
         tag = command.split(" ", 2)[2]
-        notes = note_manager.find_notes_by_tag(tag)
+        notes = Note_Management_Logic.find_notes_by_tag(tag)
         if not notes:
             console.print(f"[yellow]No notes found with tag '{tag}'.[/yellow]")
             return
@@ -159,7 +188,7 @@ def handle_get_note(command):
     """Gets a single note by ID and prints it."""
     try:
         note_id = command.split(" ")[2]
-        note = note_manager.get_note_by_id(int(note_id))
+        note = Note_Management_Logic.get_note_by_id(int(note_id))
         if not note:
             console.print(f"[red]Error: No note found with ID {note_id}[/red]")
         else:
@@ -171,18 +200,55 @@ def handle_get_note(command):
     except (IndexError, ValueError):
         console.print("[red]Error: Please provide a valid ID. (e.g., get note 5)[/red]")
 
+def handle_summarize_note(command):
+    """Gets a note ID, summarizes it, and prints the result in a panel."""
+    try:
+        note_id = int(command.split(" ")[2])
+        console.print(f"[yellow]Generating summary for note {note_id}...[/yellow]")
+        
+        summary = Note_Management_Logic.summarize_note(note_id)
+        
+        # Display the summary in a nice panel
+        console.print(Panel(
+            summary,
+            title=f"Summary for Note {note_id}",
+            title_align="left",
+            border_style="green"
+        ))
+            
+    except (IndexError, ValueError):
+        console.print("[red]Error: Please provide a valid ID. (e.g., summarize note 5)[/red]")
+
+def handle_brief_me():
+    """
+    Calls the AI agent to get a daily briefing and prints it.
+    """
+    console.print("[yellow]Generating your daily briefing...[/yellow]")
+    
+    # This function handles all the logic and AI calls
+    briefing = ai_agents.get_daily_briefing()
+    
+    console.print(Panel(
+        briefing,
+        title="Your Daily Briefing",
+        title_align="left",
+        border_style="cyan"
+    ))
+
 def main_loop():
     """The main chat loop for the application."""
     console.print("[bold green]Welcome to your Personal AI Assistant![/bold green]")
     print_help()
     
-    if note_manager.CLIENT is None:
+    if Note_Management_Logic.CLIENT is None:
         console.print("\n[bold red]Warning: OPENAI_API_KEY is not set.[/bold red]")
         console.print("[yellow]Note-related features (add note, find similar) will not work.[/yellow]")
 
     while True:
         try:
-            command = Prompt.ask("\n> ").lower().strip()
+            # --- UPDATED: Replaced Prompt.ask with input() ---
+            command = input("\n> ").lower().strip()
+            # --- END UPDATE ---
             
             if not command:
                 continue
@@ -193,26 +259,30 @@ def main_loop():
                 break
             elif command == "help":
                 print_help()
+            elif command == "brief me":
+                handle_brief_me()
             
             # --- Task Commands ---
-            elif command == "add task":
+            elif command.startswith("smart add "):
+                handle_smart_add(command)
+            elif command == "add task detailed":
                 handle_add_task()
-            elif command == "list tasks":
-                handle_list_tasks()
+            elif command.startswith("list tasks"): # --- THIS IS THE FIX ---
+                handle_list_tasks(command)           # It now passes 'command'
             elif command.startswith("done "):
                 try:
                     task_id = int(command.split(" ")[1])
-                    task_manager.update_task_status(task_id, "done")
+                    Task_Management_Logic.update_task_status(task_id, "done")
                 except (IndexError, ValueError):
                     console.print("[red]Invalid command. Use: done [ID][/red]")
             elif command.startswith("del task "):
                 try:
                     task_id = int(command.split(" ")[2])
-                    task_manager.delete_task(task_id)
+                    Task_Management_Logic.delete_task(task_id)
                 except (IndexError, ValueError):
                     console.print("[red]Invalid command. Use: del task [ID][/red]")
             
-            # Note Commands
+            # --- Note Commands ---
             elif command == "add note":
                 handle_add_note()
             elif command == "find similar":
@@ -221,8 +291,10 @@ def main_loop():
                 handle_find_tag(command)
             elif command.startswith("get note "):
                 handle_get_note(command)
+            elif command.startswith("summarize note "):
+                handle_summarize_note(command)
             
-            # Unknown Command
+            # --- Unknown Command ---
             else:
                 console.print("[red]Unknown command. Type 'help' for options.[/red]")
                 
@@ -237,7 +309,7 @@ def main_loop():
 if __name__ == "__main__":
     # This is the entry point.
     # First, make sure the database and tables exist.
-    database.initialize_database()
+    Database_initializer.initialize_database()
     
     # Then, start the main application loop.
     main_loop()
