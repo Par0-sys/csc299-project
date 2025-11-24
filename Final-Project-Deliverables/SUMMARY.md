@@ -9,13 +9,15 @@ Google Gemini PRO
 Copilot Pro from Github.
 Both of these were provided at the beginning of the class as mandatory installs, whether the other students picked the one I did or not.
 
-### Phase 1: Planning and Architecture
+### Phase 1: Planning and Architecture (Idea-Bouncing)
 
 I began with the project's broad requirements. My first step was to use the AI chat service as an AI Architect to format the entire project and bounce ideas from. I presented the requirements to it, and the AI helped me brainstorm the core architecture, breaking the project down into four layers: Storage, Logic, AI, and Interface. We collaboratively debated the pros and cons of using JSON, Neo4J, or SQLite as the storage layer. We decided on SQLite because it is powerful, portable, and doesn't require a separate server or complex file management. This decision worked very well towards the end of the project as there weren't any hiccups from the start using this format. And since it was listed as a storage type in the final project, I presumed that it was allowed to be used. The AI then provided an initial "study plan" and prototype stubs for the database to begin working on the project itself.
 
-### Phase 2: Core Logic Prototyping
+### Phase 2: Core Logic Prototyping (Bug fixes and Failed Prototypes)
 
 Once the architecture was set, I used the AI as a Pair-Programmer and Tutor. I asked the AI for the code to build the core database and task management functions, and it generated the initial Database Initializer and Task Manager logic files for me to begin working on. Wovening these two to synchronize with eachother did wonders for me while working on it. When I was confused about a concept, like why the cursor function was needed for these functions to work, It managed to provide an excellent explanation on the topic and make sure I understood it completely from top to bottom, helping me in moving forward with the project.
+
+This is where the majority of my prototypes began failing one after another whether that would be from nerves or just a lack of knowledge, but it all boiled down to me not have the experience from the lectures towards the end of the quarter to understand the bugs that I was getting at the time, Hence why there wasn't much publishing of the code until the final few days of the quarter as I was running out of time when it finally clicked. The code finally ran as intended and I was able to move onto the next phase.
 
 ### Phase 3: The "Smart Librarian" (Where the majority of bugs occured)
 
@@ -25,11 +27,11 @@ The breakthrough came when I asked, "Can't I just use OpenAI from my lecture?" T
 
 With that, it assetted with a new mountain of debugging to make it work properly, sometimes the list tasks function wouldn't know where it was, while other times the AI didn't know any key was used for it. In the end, Using both Google Gemini and Copilot were the assistants I needed to push through these troubleshoots and make sure the code worked properly. How I fixed the list tasks function was turning it into a command for the user to filter through specific types of lists.
 
-###  Phase 4: Iterative Feature Development & Workflow
+###  Phase 4: Iterative Feature Development & Workflow (Consistency)
 
 With the core logic in place, I asked the AI to adopt a professional workflow. I would check in with it to make improvements on the changtes that I made, making sure it let me know if the changes were actually good or harmful. I also asked for it to provide me a direction to take these improvements in the case I didn't have any ideas. This was extremely effective. From this point on, every new feature was added as a logical, well-documented change. With the help of AI, I rapidly built all the key AI agents, one by one. For the AI note summarizer, Google Gemini knew to fetch the note from Note_Manager_Logic file and use the Chat Completions API. For the 'smart add' agent, Copilot steered me in the right direction to write a function using a detailed system prompt and OpenAI's "JSON mode" to parse natural language into a structured task. For the 'Daily Briefing', Google Gemini created a new ai_agents file to house the agent, which fetches tasks and uses an LLM to write a prioritized, friendly summary.
 
-### Phase 5: Final Setup and Finishing Touches
+### Phase 5: Final Setup and Finishing Touches (Final Deliverable)
 
 Finally, I used the AI as a Technical Support Specialist when back-end issues arose. One main example I used it for was when the packages that were suggested needed more specific installs, so I asked Gemini to assist me in that process before more testing commenced as both of the packages had been updated compared to when I used them in the past. With those confusions out of the way, I would run the last set of tests before being satisfied with the final product I am providing for the final project, along with some final touches to the bug fixes that needed to be addressed. All of the packages I used were just add-ons with quick installs with cosmetic intent, with 95% of the project still being OpenAI operated.
 # ----------------------------------------------------------------------------------------------------
